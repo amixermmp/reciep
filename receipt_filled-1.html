@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบเสร็จรับเงิน — บริษัท เดโม่ เทรดดิ้ง จำกัด</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+  :root {
+    --ink:#1a1a2e; --ink-muted:#6b7280; --rule:#e5e7eb;
+    --accent:#1e40af; --accent-light:#eff6ff;
+    --paper:#fff; --bg:#f1f5f9; --success:#059669; --danger:#dc2626;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:24px 16px;}
+
+  /* ── Layout ── */
+  .app{display:grid;grid-template-columns:360px 1fr;gap:24px;max-width:1200px;margin:0 auto;align-items:start;}
+
+  /* ── Panel ── */
+  .panel{background:var(--paper);border-radius:16px;border:1px solid var(--rule);overflow:hidden;position:sticky;top:24px;max-height:calc(100vh - 48px);overflow-y:auto;}
+  .panel-header{background:var(--accent);color:#fff;padding:20px 24px;font-size:16px;font-weight:600;letter-spacing:.02em;}
+  .panel-body{padding:20px 24px;display:flex;flex-direction:column;gap:20px;}
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);padding-bottom:8px;border-bottom:2px solid var(--accent-light);margin-bottom:4px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:12px;font-weight:600;color:var(--ink-muted);}
+  input[type="text"],input[type="number"],textarea{font-family:'Sarabun',sans-serif;font-size:14px;color:var(--ink);border:1.5px solid var(--rule);border-radius:8px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;background:#fafafa;}
+  input:focus,textarea:focus{border-color:var(--accent);background:#fff;}
+  textarea{resize:vertical;min-height:64px;}
+  .logo-upload{border:2px dashed var(--rule);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;position:relative;overflow:hidden;}
+  .logo-upload:hover{border-color:var(--accent);background:var(--accent-light);}
+  .logo-upload input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+  .logo-upload .upload-hint{font-size:12px;color:var(--ink-muted);}
+  .logo-upload .upload-hint strong{display:block;font-size:13px;color:var(--accent);}
+  #logo-preview{max-height:60px;max-width:100%;display:none;margin:0 auto 6px;}
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .btn{font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;transition:opacity .15s,transform .1s;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-outline{background:transparent;border:1.5px solid var(--rule);color:var(--ink);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:transparent;border:1.5px solid #fca5a5;color:var(--danger);font-size:12px;padding:6px 10px;}
+  .btn-danger:hover{background:#fef2f2;}
+  .btn-print{background:var(--success);color:#fff;width:100%;padding:13px;font-size:15px;border-radius:10px;}
+  .btn-print:hover{opacity:.9;}
+  .items-section{display:flex;flex-direction:column;gap:8px;}
+  .item-row{display:grid;grid-template-columns:1fr 72px 90px 28px;gap:6px;align-items:center;}
+  .item-header{font-size:11px;font-weight:700;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.07em;padding-bottom:4px;border-bottom:1px solid var(--rule);}
+  .item-header span{padding:0 2px;}
+  .vat-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;}
+  .vat-row label{font-size:12px;font-weight:600;color:var(--ink-muted);}
+  .vat-row input{width:72px;text-align:right;}
+
+  /* ── Preview ── */
+  .preview-wrap{display:flex;flex-direction:column;gap:16px;}
+  .preview-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-muted);}
+  .receipt{background:var(--paper);border-radius:16px;border:1px solid var(--rule);padding:48px 48px 40px;font-size:14px;line-height:1.6;min-width:0;}
+  .receipt-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:28px;border-bottom:2px solid var(--ink);gap:24px;}
+  .seller-block{display:flex;gap:16px;align-items:flex-start;flex:1;}
+  .seller-logo{width:72px;height:72px;border-radius:10px;border:1.5px solid var(--rule);object-fit:contain;display:none;flex-shrink:0;}
+  .seller-logo.has-logo{display:block;}
+  .seller-logo-placeholder{width:72px;height:72px;border-radius:10px;border:2px dashed var(--rule);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-muted);text-align:center;flex-shrink:0;line-height:1.4;}
+  .seller-info{min-width:0;}
+  .seller-name{font-size:18px;font-weight:700;color:var(--ink);line-height:1.3;}
+  .seller-address{font-size:12.5px;color:var(--ink-muted);margin-top:4px;max-width:260px;}
+  .receipt-meta{text-align:right;flex-shrink:0;}
+  .receipt-title{font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--accent);margin-bottom:8px;}
+  .meta-table{font-size:13px;}
+  .meta-table tr td:first-child{color:var(--ink-muted);padding-right:12px;text-align:left;}
+  .meta-table tr td:last-child{font-weight:600;}
+  .customer-section{margin-top:24px;padding:16px 18px;background:var(--accent-light);border-radius:10px;border-left:3px solid var(--accent);}
+  .customer-section .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;}
+  .customer-name{font-size:15px;font-weight:600;}
+  .customer-detail{font-size:12.5px;color:var(--ink-muted);margin-top:2px;}
+  .items-table{width:100%;border-collapse:collapse;margin-top:28px;font-size:13.5px;}
+  .items-table thead tr{border-bottom:2px solid var(--ink);}
+  .items-table thead th{padding:0 8px 10px;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-muted);}
+  .items-table thead th:first-child{text-align:left;padding-left:0;}
+  .items-table thead th:not(:first-child){text-align:right;}
+  .items-table tbody tr{border-bottom:1px solid var(--rule);}
+  .items-table tbody td{padding:10px 8px;vertical-align:top;}
+  .items-table tbody td:first-child{padding-left:0;}
+  .items-table tbody td:not(:first-child){text-align:right;}
+  .totals-block{display:flex;justify-content:flex-end;margin-top:20px;}
+  .totals-table{font-size:13.5px;min-width:260px;}
+  .totals-table tr td{padding:5px 0;}
+  .totals-table tr td:first-child{color:var(--ink-muted);padding-right:24px;}
+  .totals-table tr td:last-child{text-align:right;font-weight:500;}
+  .totals-table .total-final{border-top:2px solid var(--ink);}
+  .totals-table .total-final td{padding-top:10px;font-size:16px;font-weight:700;color:var(--ink);}
+  .signature-section{margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+  .sig-box{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .sig-line{width:100%;border-bottom:1.5px solid var(--ink);position:relative;height:56px;display:flex;align-items:flex-end;justify-content:center;}
+  .sig-canvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;}
+  .sig-label{font-size:11.5px;color:var(--ink-muted);text-align:center;line-height:1.5;}
+  .sig-name{font-size:13px;font-weight:600;}
+  .sig-controls{display:flex;gap:8px;justify-content:center;margin-top:4px;}
+  .print-bar{background:var(--paper);border-radius:12px;border:1px solid var(--rule);padding:16px 20px;display:flex;gap:10px;}
+
+  @media print{
+    body{background:#fff;padding:0;}
+    .panel,.preview-label,.sig-controls,.print-bar{display:none!important;}
+    .app{grid-template-columns:1fr;}
+    .receipt{border:none;border-radius:0;padding:32px;box-shadow:none;}
+    .preview-wrap{gap:0;}
+  }
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr;}
+    .panel{position:static;}
+    .receipt{padding:28px 20px;}
+    .signature-section{grid-template-columns:1fr;gap:24px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── LEFT PANEL ── -->
+  <aside class="panel">
+    <div class="panel-header">✏️ กรอกข้อมูลใบเสร็จ</div>
+    <div class="panel-body">
+
+      <div>
+        <div class="section-title">ข้อมูลผู้ออกใบเสร็จ</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <div class="field">
+            <label>โลโก้ร้าน</label>
+            <div class="logo-upload">
+              <input type="file" id="logo-input" accept="image/*">
+              <img id="logo-preview" alt="logo preview">
+              <div class="upload-hint"><strong>คลิกเพื่ออัปโหลดโลโก้</strong>PNG, JPG, SVG</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>ชื่อร้าน / บริษัท</label>
+            <input type="text" id="seller-name" value="บริษัท เดโม่ เทรดดิ้ง จำกัด" oninput="update()">
+          </div>
+          <div class="field">
+            <label>ที่อยู่ร้าน</label>
+            <textarea id="seller-address" oninput="update()">99/9 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110
+โทร 02-123-4567</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">เลขที่ใบเสร็จ</div>
+        <div class="row-2" style="margin-top:10px;">
+          <div class="field">
+            <label>เลขที่</label>
+            <input type="text" id="receipt-no" value="REC-2568-0042" oninput="update()">
+          </div>
+          <div class="field">
+            <label>วันที่</label>
+            <input type="text" id="receipt-date" value="25/06/2568" oninput="update()">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">ข้อมูลลูกค้า</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <div class="field">
+            <label>ชื่อลูกค้า / บริษัท</label>
+            <input type="text" id="cust-name" value="บริษัท ลูกค้า เอบีซี จำกัด" oninput="update()">
+          </div>
+          <div class="field">
+            <label>ที่อยู่</label>
+            <textarea id="cust-address" oninput="update()">55/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพมหานคร 10310</textarea>
+          </div>
+          <div class="field">
+            <label>เลขประจำตัวผู้เสียภาษี</label>
+            <input type="text" id="cust-tax" value="0105-567-890-12-3" oninput="update()">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">รายการสินค้า / บริการ</div>
+        <div style="margin-top:10px;" class="items-section">
+          <div class="item-row item-header">
+            <span>รายการ</span>
+            <span style="text-align:right">จำนวน</span>
+            <span style="text-align:right">ราคา</span>
+            <span></span>
+          </div>
+          <div id="item-rows"></div>
+          <button class="btn btn-outline" onclick="addItem()" style="margin-top:4px;">+ เพิ่มรายการ</button>
+        </div>
+      </div>
+
+      <div class="vat-row">
+        <label>VAT (%)</label>
+        <input type="number" id="vat-pct" value="7" min="0" max="100" oninput="update()">
+      </div>
+
+      <div>
+        <div class="section-title">ผู้รับเงิน / ผู้อนุมัติ</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <div class="field">
+            <label>ชื่อผู้รับเงิน</label>
+            <input type="text" id="sign-receiver" value="นางสาว สมใจ รักงาน" oninput="update()">
+          </div>
+          <div class="field">
+            <label>ชื่อผู้มีอำนาจอนุมัติ</label>
+            <input type="text" id="sign-approver" value="นาย วิชัย มั่งมี" oninput="update()">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ── RIGHT PREVIEW ── -->
+  <div class="preview-wrap">
+    <div class="preview-label">ตัวอย่างใบเสร็จ — เรียลไทม์</div>
+
+    <div class="print-bar">
+      <button class="btn btn-print" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+      <button class="btn btn-outline" onclick="clearSigs()">ล้างลายเซ็น</button>
+    </div>
+
+    <div class="receipt" id="receipt">
+
+      <div class="receipt-header">
+        <div class="seller-block">
+          <div class="seller-logo-placeholder" id="logo-placeholder">โลโก้<br>ร้าน</div>
+          <img class="seller-logo" id="receipt-logo" src="" alt="logo">
+          <div class="seller-info">
+            <div class="seller-name" id="r-seller-name">บริษัท เดโม่ เทรดดิ้ง จำกัด</div>
+            <div class="seller-address" id="r-seller-address">99/9 ถนนสุขุมวิท แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110 โทร 02-123-4567</div>
+          </div>
+        </div>
+        <div class="receipt-meta">
+          <div class="receipt-title">ใบเสร็จรับเงิน</div>
+          <table class="meta-table">
+            <tr><td>เลขที่</td><td id="r-no">REC-2568-0042</td></tr>
+            <tr><td>วันที่</td><td id="r-date">25/06/2568</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="customer-section">
+        <div class="lbl">ลูกค้า / ผู้ชำระเงิน</div>
+        <div class="customer-name" id="r-cust-name">บริษัท ลูกค้า เอบีซี จำกัด</div>
+        <div class="customer-detail" id="r-cust-address">55/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพมหานคร 10310</div>
+        <div class="customer-detail" id="r-cust-tax">เลขผู้เสียภาษี: 0105-567-890-12-3</div>
+      </div>
+
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>รายการ</th>
+            <th>จำนวน</th>
+            <th>ราคา (รวม VAT)</th>
+            <th>รวม</th>
+          </tr>
+        </thead>
+        <tbody id="r-items"></tbody>
+      </table>
+
+      <div class="totals-block">
+        <table class="totals-table">
+          <tr><td>ยอดก่อน VAT</td><td id="r-subtotal">0.00 ฿</td></tr>
+          <tr><td id="r-vat-label">VAT (7%)</td><td id="r-vat">0.00 ฿</td></tr>
+          <tr class="total-final"><td>ยอดรวมทั้งสิ้น</td><td id="r-total">0.00 ฿</td></tr>
+        </table>
+      </div>
+
+      <div class="signature-section">
+        <div class="sig-box">
+          <div class="sig-line">
+            <canvas class="sig-canvas" id="canvas-receiver" width="400" height="56"></canvas>
+          </div>
+          <div class="sig-controls">
+            <button class="btn btn-danger" onclick="clearCanvas('canvas-receiver')">ล้างลายเซ็น</button>
+          </div>
+          <div class="sig-label">
+            ลงชื่อ ................................<br>
+            <span class="sig-name" id="r-receiver">( นางสาว สมใจ รักงาน )</span><br>
+            ผู้รับเงิน
+          </div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line">
+            <canvas class="sig-canvas" id="canvas-approver" width="400" height="56"></canvas>
+          </div>
+          <div class="sig-controls">
+            <button class="btn btn-danger" onclick="clearCanvas('canvas-approver')">ล้างลายเซ็น</button>
+          </div>
+          <div class="sig-label">
+            ลงชื่อ ................................<br>
+            <span class="sig-name" id="r-approver">( นาย วิชัย มั่งมี )</span><br>
+            ผู้มีอำนาจอนุมัติ
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Items (pre-filled) ── */
+  let items = [
+    { desc: 'ค่าบริการออกแบบเว็บไซต์', qty: 1, price: 25000 },
+    { desc: 'ค่าโฮสติ้งรายปี', qty: 1, price: 3600 },
+    { desc: 'ค่า Domain Name', qty: 1, price: 890 },
+    { desc: 'ค่าบำรุงรักษาระบบรายเดือน', qty: 3, price: 1500 },
+  ];
+
+  function renderItemInputs() {
+    const c = document.getElementById('item-rows');
+    c.innerHTML = '';
+    items.forEach((it, i) => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <input type="text" placeholder="รายการ" value="${it.desc.replace(/"/g,'&quot;')}"
+          oninput="items[${i}].desc=this.value;update()">
+        <input type="number" placeholder="จำนวน" value="${it.qty}" min="1" style="text-align:right"
+          oninput="items[${i}].qty=parseFloat(this.value)||0;update()">
+        <input type="number" placeholder="ราคา" value="${it.price}" min="0" step="0.01" style="text-align:right"
+          oninput="items[${i}].price=parseFloat(this.value)||0;update()">
+        <button class="btn btn-danger" onclick="removeItem(${i})" style="padding:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">✕</button>
+      `;
+      c.appendChild(row);
+    });
+  }
+
+  function addItem() { items.push({desc:'',qty:1,price:0}); renderItemInputs(); update(); }
+  function removeItem(i) {
+    items.splice(i,1);
+    if(!items.length) items.push({desc:'',qty:1,price:0});
+    renderItemInputs(); update();
+  }
+
+  const fmt = n => n.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  function update() {
+    // Seller
+    const sn = document.getElementById('seller-name').value.trim();
+    document.getElementById('r-seller-name').textContent = sn || 'ชื่อร้าน / บริษัท';
+    document.getElementById('r-seller-address').textContent =
+      document.getElementById('seller-address').value.trim() || 'ที่อยู่';
+
+    // Meta
+    document.getElementById('r-no').textContent = document.getElementById('receipt-no').value.trim() || '—';
+    document.getElementById('r-date').textContent = document.getElementById('receipt-date').value.trim() || '—';
+
+    // Customer
+    document.getElementById('r-cust-name').textContent = document.getElementById('cust-name').value.trim() || '—';
+    const ca = document.getElementById('cust-address').value.trim();
+    const el_ca = document.getElementById('r-cust-address');
+    el_ca.textContent = ca; el_ca.style.display = ca ? '' : 'none';
+    const ct = document.getElementById('cust-tax').value.trim();
+    const el_ct = document.getElementById('r-cust-tax');
+    el_ct.textContent = ct ? `เลขผู้เสียภาษี: ${ct}` : ''; el_ct.style.display = ct ? '' : 'none';
+
+    // Items
+    const tbody = document.getElementById('r-items');
+    const filled = items.filter(it => it.desc.trim());
+    if (!filled.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px 0;color:var(--ink-muted);font-style:italic;">— ยังไม่มีรายการ —</td></tr>`;
+    } else {
+      tbody.innerHTML = filled.map(it => {
+        const t = it.qty * it.price;
+        return `<tr>
+          <td>${it.desc}</td>
+          <td style="text-align:right">${it.qty}</td>
+          <td style="text-align:right">${fmt(it.price)} ฿</td>
+          <td style="text-align:right">${fmt(t)} ฿</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Totals — ราคาที่กรอกคือราคา "รวม VAT แล้ว"
+    const total = items.reduce((s,it) => s + it.qty * it.price, 0);
+    const vp = parseFloat(document.getElementById('vat-pct').value) || 0;
+    const sub = vp > 0 ? total / (1 + vp / 100) : total;
+    const vat = total - sub;
+    document.getElementById('r-subtotal').textContent = fmt(sub) + ' ฿';
+    document.getElementById('r-vat-label').textContent = `VAT (${vp}%)`;
+    document.getElementById('r-vat').textContent = fmt(vat) + ' ฿';
+    document.getElementById('r-total').textContent = fmt(total) + ' ฿';
+
+    // Sigs
+    const rec = document.getElementById('sign-receiver').value.trim();
+    document.getElementById('r-receiver').textContent = rec ? `( ${rec} )` : '( ผู้รับเงิน )';
+    const app = document.getElementById('sign-approver').value.trim();
+    document.getElementById('r-approver').textContent = app ? `( ${app} )` : '( ผู้มีอำนาจอนุมัติ )';
+  }
+
+  /* Logo */
+  document.getElementById('logo-input').addEventListener('change', function(){
+    const f = this.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = e => {
+      const src = e.target.result;
+      document.getElementById('logo-preview').src = src;
+      document.getElementById('logo-preview').style.display = 'block';
+      document.getElementById('receipt-logo').src = src;
+      document.getElementById('receipt-logo').classList.add('has-logo');
+      document.getElementById('logo-placeholder').style.display = 'none';
+    };
+    r.readAsDataURL(f);
+  });
+
+  /* Signature */
+  function initCanvas(id) {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    let drawing = false, lx, ly;
+    const pos = e => {
+      const r = canvas.getBoundingClientRect();
+      const sx = canvas.width/r.width, sy = canvas.height/r.height;
+      return e.touches
+        ? [(e.touches[0].clientX-r.left)*sx,(e.touches[0].clientY-r.top)*sy]
+        : [(e.clientX-r.left)*sx,(e.clientY-r.top)*sy];
+    };
+    canvas.addEventListener('mousedown', e=>{e.preventDefault();drawing=true;[lx,ly]=pos(e);});
+    canvas.addEventListener('mousemove', e=>{
+      if(!drawing) return; e.preventDefault();
+      const [x,y]=pos(e);
+      ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);
+      ctx.strokeStyle='#1a1a2e';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.stroke();
+      [lx,ly]=[x,y];
+    });
+    canvas.addEventListener('mouseup',()=>drawing=false);
+    canvas.addEventListener('mouseleave',()=>drawing=false);
+    canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;[lx,ly]=pos(e);},{passive:false});
+    canvas.addEventListener('touchmove',e=>{
+      if(!drawing) return; e.preventDefault();
+      const [x,y]=pos(e);
+      ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);
+      ctx.strokeStyle='#1a1a2e';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.stroke();
+      [lx,ly]=[x,y];
+    },{passive:false});
+    canvas.addEventListener('touchend',()=>drawing=false);
+  }
+  function clearCanvas(id){const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);}
+  function clearSigs(){clearCanvas('canvas-receiver');clearCanvas('canvas-approver');}
+
+  initCanvas('canvas-receiver');
+  initCanvas('canvas-approver');
+  renderItemInputs();
+  update();
+</script>
+</body>
+</html>
